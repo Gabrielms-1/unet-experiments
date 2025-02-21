@@ -1,0 +1,4 @@
+/data
+.dvc/
+venv/
+.DS_Store
