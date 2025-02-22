@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision import transforms
+import torch
 
 class UNet(nn.Module):
     
@@ -72,14 +72,7 @@ class UNet(nn.Module):
 
         return self.final_conv(d1)
         
-image_transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
 
-mask_transform = transforms.Compose([
-    transforms.ToTensor()
-])
         
 
 

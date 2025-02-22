@@ -1,7 +1,7 @@
 import time
 
 # Data paths
-root_dir = "data/cityviews/preprocessed"
+root_dir = "data/camvid"
 
 # Checkpoint directory
 checkpoint_dir = 'data/model/checkpoints/'
@@ -10,10 +10,10 @@ checkpoint_dir = 'data/model/checkpoints/'
 current_time = time.strftime("%Y-%m-%d_%H-%M-%S")
 
 # Model and training parameters
-num_classes = 8
+num_classes = 32
 learning_rate = 0.001
 epochs = 10 # Default value, can be overridden by command line arguments
-batch_size = 64 # Default value, can be overridden by command line arguments
+batch_size = 32 # Default value, can be overridden by command line arguments
 
 # Wandb settings
-wandb_project = "cityviews-segmentation" 
+wandb_project = "camvid-segmentation" 
