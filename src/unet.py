@@ -61,24 +61,24 @@ class UNet(nn.Module):
         bottleneck = self.bottleneck(e4)
         print(f"Shape da saída do bottleneck: {bottleneck.shape}")
         # Decoder
-        #d4 = self.upconv4(bottleneck)
-        d4 = torch.cat((e4, bottleneck), dim=1)
-        d4 = self.conv_block(d4)
+        d4 = self.upconv4(bottleneck)
+        d4 = torch.cat((e4, d4), dim=1)
+        #d4 = self.conv_block(d4)
         d4 = self.deconv4(d4)
 
         d3 = self.upconv3(d4)
         d3 = torch.cat((e3, d3), dim=1)
-        d3 = self.conv_block(d3)
+        #d3 = self.conv_block(d3)
         d3 = self.deconv3(d3)
 
         d2 = self.upconv2(d3)
         d2 = torch.cat((e2, d2), dim=1)
-        d2 = self.conv_block(d2)
+        #d2 = self.conv_block(d2)
         d2 = self.deconv2(d2)
 
         d1 = self.upconv1(d2)
         d1 = torch.cat((e1, d1), dim=1)
-        d1 = self.conv_block(d1)
+        #d1 = self.conv_block(d1)
         d1 = self.deconv1(d1)
 
         return self.final_conv(d1)
