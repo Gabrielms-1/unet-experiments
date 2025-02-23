@@ -18,6 +18,10 @@ class CustomDataset(Dataset):
             self.class_mapping = {class_name: tuple(rgb) for class_name, rgb in class_mapping.items()}
         self.class_to_idx = {rgb: i for i, rgb in enumerate(self.class_mapping.values())}
         
+        self.mask_transform = transforms.Compose([
+            transforms.Resize((256, 256), interpolation=transforms.InterpolationMode.NEAREST)
+        ])
+
     def __len__(self):
         return len(self.images)
     
@@ -29,6 +33,7 @@ class CustomDataset(Dataset):
         mask = np.array(mask)
         mask = self.rgb_to_class(mask)
         mask = torch.tensor(mask, dtype=torch.long)
+        mask = self.mask_transform(mask.unsqueeze(0)).squeeze(0)
             
         return image, mask
     
