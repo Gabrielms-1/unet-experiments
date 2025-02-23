@@ -5,7 +5,7 @@ root_dir = "data/camvid/preprocessed"
 device = "cpu"
 # Checkpoint directory
 checkpoint_dir = 'data/model/checkpoints/'
-
+img_res = 720
 # Current timestamp for saving models and checkpoints
 current_time = time.strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -13,7 +13,7 @@ current_time = time.strftime("%Y-%m-%d_%H-%M-%S")
 num_classes = 32
 learning_rate = 0.001
 epochs = 20 # Default value, can be overridden by command line arguments
-batch_size = 32 # Default value, can be overridden by command line arguments
+batch_size = 16 # Default value, can be overridden by command line arguments
 
 # Wandb settings
 wandb_project = "camvid-segmentation" 
