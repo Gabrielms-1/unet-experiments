@@ -15,8 +15,9 @@ import wandb
 def evaluate(model, val_loader, device, criterion):
     model.eval()
 
-    val_loss = 0
     with torch.no_grad():
+        epoch_loss = 0
+        batch_loss = 0
         for image, mask in val_loader:
             image = image.to(device)
             mask = mask.to(device)
@@ -24,11 +25,20 @@ def evaluate(model, val_loader, device, criterion):
             output = model(image)
 
             loss = criterion(output, mask)
-            val_loss += loss.item()
+            batch_loss += loss.item()
+
+        epoch_loss = batch_loss / len(val_loader)
+
+    return epoch_loss
 
 def train(train_loader, val_loader, model, device, optimizer, criterion):
+    train_loss = []
+    val_loss = []
+    
+    # epochs:
     for i in range(wandb.config.epochs):
-        # batch_loss = 0
+        batch_loss = 0
+        # batch
         for image, mask in train_loader:
             image = image.to(device)
             mask = mask.to(device)
@@ -42,7 +52,17 @@ def train(train_loader, val_loader, model, device, optimizer, criterion):
 
             optimizer.step()
 
-        evaluate(model, val_loader, device, criterion)
+            batch_loss += loss.item()
+        
+        epoch_loss = batch_loss / len(train_loader)
+        train_loss.append(epoch_loss)
+        current_val_loss = evaluate(model, val_loader, device, criterion)
+        val_loss.append(current_val_loss)
+        
+        wandb.log({
+            "train_loss": epoch_loss,
+            "val_loss": current_val_loss
+        })
 
         checkpoint_dir = os.path.join(config.checkpoint_dir, config.current_time)
         os.makedirs(checkpoint_dir, exist_ok=True)
@@ -51,8 +71,12 @@ def train(train_loader, val_loader, model, device, optimizer, criterion):
             torch.save({
                 "model_state_dict": model.state_dict(),
                 "epoch": i+1,
-                "loss": loss.item()
+                "train_loss": epoch_loss,
+                "val_loss": current_val_loss
             }, os.path.join(checkpoint_dir, f"checkpoint_{i}.pth"))
+
+    return train_loss, val_loss
+
 
 def main(args):
     wandb.init(project=config.wandb_project, config={
@@ -89,7 +113,7 @@ def main(args):
     if not os.path.exists(checkpoint_dir):
         os.makedirs(checkpoint_dir)
 
-    train(train_loader, val_loader, model, device, optimizer, criterion)
+    train_loss, val_loss = train(train_loader, val_loader, model, device, optimizer, criterion)
 
 
 if __name__ == "__main__":
