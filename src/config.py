@@ -13,7 +13,7 @@ current_time = time.strftime("%Y-%m-%d_%H-%M-%S")
 num_classes = 32
 learning_rate = 0.001
 epochs = 20 # Default value, can be overridden by command line arguments
-batch_size = 16 # Default value, can be overridden by command line arguments
+batch_size = 4 # Default value, can be overridden by command line arguments
 
 # Wandb settings
 wandb_project = "camvid-segmentation" 
