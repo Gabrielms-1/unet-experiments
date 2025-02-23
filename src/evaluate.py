@@ -46,7 +46,7 @@ def calculate_metrics(preds, targets, num_classes):
         'per_class_iou': iou_per_class
     }
 
-def evaluate_model(model, test_loader, device, num_classes, num_examples=10):
+def evaluate_model(model, test_loader, device, num_classes):
     model.eval()
     metrics = {
         'mean_iou': 0,
@@ -56,7 +56,6 @@ def evaluate_model(model, test_loader, device, num_classes, num_examples=10):
         'mean_recall': 0,
         'per_class_iou': [0] * num_classes
     }
-    example_count = 0
 
     with torch.no_grad():
         for images, masks in test_loader:
@@ -75,23 +74,6 @@ def evaluate_model(model, test_loader, device, num_classes, num_examples=10):
                 else:
                     metrics[key] += batch_metrics[key] / len(test_loader)
 
-            if example_count < num_examples:
-                class_colors = test_loader.dataset.get_class_colors()
-                
-                rgb_images = (images.cpu() * 255).byte().permute(0, 2, 3, 1)
-                gt_masks = apply_colormap(masks.cpu(), class_colors)
-                pred_masks = apply_colormap(preds.cpu(), class_colors)
-                
-                for i in range(min(images.size(0), num_examples - example_count)):
-                    wandb.log({
-                        "examples": [
-                            wandb.Image(rgb_images[i], caption="Original Image"),
-                            wandb.Image(gt_masks[i], caption="Ground Truth"),
-                            wandb.Image(pred_masks[i], caption="Prediction")
-                        ]
-                    })
-                    example_count += 1
-
     return metrics
 
 def load_checkpoint(model, checkpoint_path):
@@ -99,47 +81,41 @@ def load_checkpoint(model, checkpoint_path):
     model.load_state_dict(checkpoint['model_state_dict'])
     return model
 
-def apply_colormap(mask_tensor, class_colors):
-    colormap = torch.tensor(class_colors, device=mask_tensor.device)
-    return colormap[mask_tensor.long()].permute(0, 3, 1, 2)
+def log_predictions(model, data_loader, device, n_images=5):
+    model.eval()
+    images, masks = next(iter(data_loader))
+    images = images.to(device)
+    outputs = model(images)
+    preds = torch.argmax(outputs, dim=1)
+    logged_images = []
+    for i in range(min(n_images, images.size(0))):
+        input_img = images[i].cpu().numpy().transpose(1, 2, 0)
+        pred_img = preds[i].cpu().numpy()
+        gt_img = masks[i].cpu().numpy()
+        pred_rgb = np.stack([pred_img, pred_img, pred_img], axis=-1)
+        gt_rgb = np.stack([gt_img, gt_img, gt_img], axis=-1)
+        combined = np.concatenate((input_img, pred_rgb, gt_rgb), axis=1)
+        logged_images.append(wandb.Image(combined, caption="Input | Prediction | GroundTruth"))
+    wandb.log({"predictions": logged_images})
 
 def main(args):
-    wandb.init(
-        project=config.wandb_project,
-        name=f"eval_{os.path.basename(args.checkpoint_path)}",
-        config={
-            "checkpoint": args.checkpoint_path,
-            "batch_size": args.batch_size
-        }
-    )
-
+    wandb.init(project=config.wandb_project, name="unet_evaluation_" + config.current_time, config={"batch_size": args.batch_size})
     test_dataset = CustomDataset(
         image_dir=os.path.join(config.root_dir, "test"),
         mask_dir=os.path.join(config.root_dir, "test_labels"),
         class_mapping_path=os.path.join(config.root_dir, "class_mapping.json")
     )
-
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=2)
-
     model = UNet(3, config.num_classes).to(config.device)
     model = load_checkpoint(model, args.checkpoint_path)
-
     metrics = evaluate_model(model, test_loader, config.device, config.num_classes)
-
-    wandb.log({
-        "metrics/mean_iou": metrics['mean_iou'],
-        "metrics/mean_dice": metrics['mean_dice'],
-        "metrics/mean_pixel_accuracy": metrics['mean_pixel_accuracy'],
-        "metrics/mean_precision": metrics['mean_precision'],
-        "metrics/mean_recall": metrics['mean_recall']
-    })
-    
     print(f"Mean IoU: {metrics['mean_iou']:.4f}")
     print(f"Mean Dice: {metrics['mean_dice']:.4f}")
     print(f"Pixel Accuracy: {metrics['mean_pixel_accuracy']:.4f}")
     print(f"Precision: {metrics['mean_precision']:.4f}")
     print(f"Recall: {metrics['mean_recall']:.4f}")
-    
+    wandb.log(metrics)
+    log_predictions(model, test_loader, config.device)
     wandb.finish()
 
 if __name__ == "__main__":
@@ -147,5 +123,4 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint_path", type=str, default="data/model/checkpoints/2025-02-23_07-29-04/checkpoint_10.pth")
     parser.add_argument("--batch_size", type=int, default=config.batch_size)
     args = parser.parse_args()
-
     main(args)

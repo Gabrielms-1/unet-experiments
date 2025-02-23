@@ -24,11 +24,12 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         image = Image.open(os.path.join(self.image_dir, self.images[idx]))
         image = image_transform(image)
+
         mask = Image.open(os.path.join(self.mask_dir, self.masks[idx]))
-        mask = mask.resize((256, 256), Image.NEAREST)
         mask = np.array(mask)
         mask = self.rgb_to_class(mask)
         mask = torch.tensor(mask, dtype=torch.long)
+            
         return image, mask
     
     def get_class_mapping(self):
@@ -42,8 +43,6 @@ class CustomDataset(Dataset):
         
         return class_mask
 
-    def get_class_colors(self):
-        return [v['color'] for v in self.class_info.values()]
 
 image_transform = transforms.Compose([
     transforms.Resize((256, 256)),
