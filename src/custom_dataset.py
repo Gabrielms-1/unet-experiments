@@ -11,7 +11,7 @@ class CustomDataset(Dataset):
         self.image_dir = image_dir
         self.mask_dir = mask_dir
         self.images = sorted([f for f in os.listdir(image_dir) if f.endswith('.png')])
-        self.masks = [f.replace('.png', '_L.png') for f in self.images]
+        self.masks = [f.replace('right.png', 'L_right.png').replace('left.png', 'L_left.png') for f in self.images]
         
         with open(class_mapping_path) as f:
             class_mapping = json.load(f)
