@@ -48,38 +48,28 @@ class UNet(nn.Module):
 
         # Encoder
         e1 = self.enc1(x)
-        print(f"Shape da saída do encoder 1 (e1): {e1.shape}")
         e2 = self.enc2(F.max_pool2d(e1, kernel_size=2))
-        print(f"Shape da saída do encoder 2 (e2): {e2.shape}")
         e3 = self.enc3(F.max_pool2d(e2, kernel_size=2))
-        print(f"Shape da saída do encoder 3 (e3): {e3.shape}")
         e4 = self.enc4(F.max_pool2d(e3, kernel_size=2))
-        print(f"Shape da saída do encoder 4 (e4): {e4.shape}")
 
         # Bottleneck
         bottleneck = self.bottleneck(F.max_pool2d(e4, kernel_size=2))
-        print(f"Shape da saída do bottleneck: {bottleneck.shape}")
         # Decoder
         d4 = self.upconv4(bottleneck)
-        print(f"Shape da saída do upconv4 (d4): {d4.shape}")
         d4 = torch.cat((e4, d4), dim=1)
-        print(f"Shape da saída do cat (d4): {d4.shape}")
         d4 = self.deconv4(d4)
-        print(f"Shape da saída do deconv4 (d4): {d4.shape}")
 
         d3 = self.upconv3(d4)
         d3 = torch.cat((e3, d3), dim=1)
-        print(f"Shape da saída do cat (d3): {d3.shape}")
         d3 = self.deconv3(d3)
-        print(f"Shape da saída do deconv3 (d3): {d3.shape}")
 
         d2 = self.upconv2(d3)
         d2 = torch.cat((e2, d2), dim=1)
-        print(f"Shape da saída do cat (d2): {d2.shape}")
         d2 = self.deconv2(d2)
         print(f"Shape da saída do deconv2 (d2): {d2.shape}")
 
         d1 = self.upconv1(d2)
+        print(f"Shape da saída do upconv1 (d1): {d1.shape}")
         d1 = torch.cat((e1, d1), dim=1)
         print(f"Shape da saída do cat (d1): {d1.shape}")
         d1 = self.deconv1(d1)
