@@ -43,25 +43,9 @@ def train(train_loader, val_loader, model, device, optimizer, criterion):
             image = image.to(device)
             mask = mask.to(device)
 
-            print("--- ANTES DE PASSAR PELA REDE NEURAL ---")
-            print(f"Shape da imagem (image): {image.shape}")
-            print(f"Tipo da imagem (image): {image.dtype}")
-            print(f"Dispositivo da imagem (image): {image.device}")
-            print(f"Valores min/max da imagem (image): {image.min()}/{image.max()}")
-
             optimizer.zero_grad()
 
-            print("--- SAÍDA DO MODELO ---")
             output = model(image)
-
-            print(f"Shape da saída do modelo (output): {output.shape}")
-            print(f"Tipo da saída do modelo (output): {output.dtype}")
-            print(f"Dispositivo da saída do modelo (output): {output.device}")
-            print(f"Valores únicos na saída do modelo (output): {torch.unique(output.argmax(dim=1))}")
-            print(f"Shape da máscara (mask): {mask.shape}")
-            print(f"Tipo da máscara (mask): {mask.dtype}")
-            print(f"Dispositivo da máscara (mask): {mask.device}")
-            print(f"Valores únicos na máscara (mask): {torch.unique(mask)}")
 
             loss = criterion(output, mask)
             loss.backward()
@@ -75,6 +59,7 @@ def train(train_loader, val_loader, model, device, optimizer, criterion):
         current_val_loss = evaluate(model, val_loader, device, criterion)
         val_loss.append(current_val_loss)
         
+        print("logging in wandb")
         wandb.log({
             "epoch": i+1,
             "train_loss": epoch_loss,
