@@ -76,6 +76,7 @@ def train(train_loader, val_loader, model, device, optimizer, criterion):
         val_loss.append(current_val_loss)
         
         wandb.log({
+            "epoch": i+1,
             "train_loss": epoch_loss,
             "val_loss": current_val_loss
         })
@@ -134,7 +135,7 @@ def main(args):
         os.makedirs(checkpoint_dir)
 
     train_loss, val_loss = train(train_loader, val_loader, model, device, optimizer, criterion)
-
+    wandb.finish()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
