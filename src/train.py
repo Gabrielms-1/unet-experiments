@@ -43,8 +43,15 @@ def train(train_loader, val_loader, model, device, optimizer, criterion):
             image = image.to(device)
             mask = mask.to(device)
 
+            print("--- ANTES DE PASSAR PELA REDE NEURAL ---")
+            print(f"Shape da imagem (image): {image.shape}")
+            print(f"Tipo da imagem (image): {image.dtype}")
+            print(f"Dispositivo da imagem (image): {image.device}")
+            print(f"Valores min/max da imagem (image): {image.min()}/{image.max()}")
+
             optimizer.zero_grad()
 
+            print("--- SAÍDA DO MODELO ---")
             output = model(image)
 
             print(f"Shape da saída do modelo (output): {output.shape}")
