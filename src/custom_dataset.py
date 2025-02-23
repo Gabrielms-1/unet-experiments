@@ -51,9 +51,9 @@ image_transform = transforms.Compose([
 
 if __name__ == "__main__":
     dataset = CustomDataset(
-        image_dir="data/camvid/train",
-        mask_dir="data/camvid/train_labels",
-        class_mapping_path="data/camvid/class_mapping.json"
+        image_dir="data/camvid/raw/train",
+        mask_dir="data/camvid/raw/train_labels",
+        class_mapping_path="data/camvid/raw/class_mapping.json"
     )
     
     img, mask = dataset[55]

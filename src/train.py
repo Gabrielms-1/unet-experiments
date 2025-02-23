@@ -47,6 +47,15 @@ def train(train_loader, val_loader, model, device, optimizer, criterion):
 
             output = model(image)
 
+            print(f"Shape da saída do modelo (output): {output.shape}")
+            print(f"Tipo da saída do modelo (output): {output.dtype}")
+            print(f"Dispositivo da saída do modelo (output): {output.device}")
+            print(f"Valores únicos na saída do modelo (output): {torch.unique(output.argmax(dim=1))}")
+            print(f"Shape da máscara (mask): {mask.shape}")
+            print(f"Tipo da máscara (mask): {mask.dtype}")
+            print(f"Dispositivo da máscara (mask): {mask.device}")
+            print(f"Valores únicos na máscara (mask): {torch.unique(mask)}")
+
             loss = criterion(output, mask)
             loss.backward()
 
@@ -104,8 +113,8 @@ def main(args):
 
     checkpoint_dir = os.path.join(config.checkpoint_dir, config.current_time)
 
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=2)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=2)
 
     model = UNet(3, config.num_classes)
     device = torch.device(config.device)
