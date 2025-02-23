@@ -1,8 +1,8 @@
 import time
 
 # Data paths
-root_dir = "data/camvid"
-
+root_dir = "data/camvid/raw"
+device = "cpu"
 # Checkpoint directory
 checkpoint_dir = 'data/model/checkpoints/'
 

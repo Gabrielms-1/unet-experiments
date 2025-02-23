@@ -1,10 +1,7 @@
 import cv2
-import numpy as np
-import matplotlib.pyplot as plt
 import os
 import glob
-from concurrent.futures import ProcessPoolExecutor
-
+from multiprocessing import Pool
 
 def process_image(image_path):
     image = cv2.imread(image_path)
@@ -19,21 +16,24 @@ def process_image(image_path):
 
 
 def process_file(file_path):
+    
     dest_dir = file_path.replace("raw", "preprocessed")
-    dest_dir = os.path.splitext(dest_dir)[0]
-    part_one, part_two, part_three = process_image(file_path)
-    base_name = os.path.basename(file_path).replace(".png", "")
+    right_image, left_image = process_image(file_path)
     
-    dest_one = dest_dir + "_one.png"
-    dest_two = dest_dir + "_two.png"
-    dest_three = dest_dir + "_three.png"
+    dest_right = dest_dir.replace(".png", "_right.png")
+    dest_left = dest_dir.replace(".png", "_left.png")
     
-    cv2.imwrite(dest_one, part_one)
-    cv2.imwrite(dest_two, part_two)
-    cv2.imwrite(dest_three, part_three)
+    os.makedirs(os.path.dirname(dest_dir), exist_ok=True)
+
+    cv2.imwrite(dest_right, right_image)
+    cv2.imwrite(dest_left, left_image)
 
 if __name__ == "__main__":
     base_raw_dir = "data/camvid/raw"
+    base_preprocessed_dir = "data/camvid/preprocessed"
     
-
+    
+    with Pool(processes=3) as pool:
+        files = glob.glob(os.path.join(base_raw_dir, "**/*.png"), recursive=True)
+        pool.map(process_file, files)
     
