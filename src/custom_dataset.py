@@ -42,6 +42,8 @@ class CustomDataset(Dataset):
         
         return class_mask
 
+def get_class_colors(self):
+    return [v['color'] for v in self.class_info.values()]
 
 image_transform = transforms.Compose([
     transforms.Resize((256, 256)),

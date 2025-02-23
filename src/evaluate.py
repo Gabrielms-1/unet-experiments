@@ -7,6 +7,7 @@ import config
 import argparse
 import os
 import numpy as np
+import wandb
 
 def calculate_metrics(preds, targets, num_classes):
     smooth = 1e-10
@@ -45,7 +46,7 @@ def calculate_metrics(preds, targets, num_classes):
         'per_class_iou': iou_per_class
     }
 
-def evaluate_model(model, test_loader, device, num_classes):
+def evaluate_model(model, test_loader, device, num_classes, num_examples=10):
     model.eval()
     metrics = {
         'mean_iou': 0,
@@ -55,6 +56,7 @@ def evaluate_model(model, test_loader, device, num_classes):
         'mean_recall': 0,
         'per_class_iou': [0] * num_classes
     }
+    example_count = 0
 
     with torch.no_grad():
         for images, masks in test_loader:
@@ -73,6 +75,23 @@ def evaluate_model(model, test_loader, device, num_classes):
                 else:
                     metrics[key] += batch_metrics[key] / len(test_loader)
 
+            if example_count < num_examples:
+                class_colors = test_loader.dataset.get_class_colors()
+                
+                rgb_images = (images.cpu() * 255).byte().permute(0, 2, 3, 1)
+                gt_masks = apply_colormap(masks.cpu(), class_colors)
+                pred_masks = apply_colormap(preds.cpu(), class_colors)
+                
+                for i in range(min(images.size(0), num_examples - example_count)):
+                    wandb.log({
+                        "examples": [
+                            wandb.Image(rgb_images[i], caption="Original Image"),
+                            wandb.Image(gt_masks[i], caption="Ground Truth"),
+                            wandb.Image(pred_masks[i], caption="Prediction")
+                        ]
+                    })
+                    example_count += 1
+
     return metrics
 
 def load_checkpoint(model, checkpoint_path):
@@ -80,7 +99,20 @@ def load_checkpoint(model, checkpoint_path):
     model.load_state_dict(checkpoint['model_state_dict'])
     return model
 
+def apply_colormap(mask_tensor, class_colors):
+    colormap = torch.tensor(class_colors, device=mask_tensor.device)
+    return colormap[mask_tensor.long()].permute(0, 3, 1, 2)
+
 def main(args):
+    wandb.init(
+        project=config.wandb_project,
+        name=f"eval_{os.path.basename(args.checkpoint_path)}",
+        config={
+            "checkpoint": args.checkpoint_path,
+            "batch_size": args.batch_size
+        }
+    )
+
     test_dataset = CustomDataset(
         image_dir=os.path.join(config.root_dir, "test"),
         mask_dir=os.path.join(config.root_dir, "test_labels"),
@@ -94,11 +126,21 @@ def main(args):
 
     metrics = evaluate_model(model, test_loader, config.device, config.num_classes)
 
+    wandb.log({
+        "metrics/mean_iou": metrics['mean_iou'],
+        "metrics/mean_dice": metrics['mean_dice'],
+        "metrics/mean_pixel_accuracy": metrics['mean_pixel_accuracy'],
+        "metrics/mean_precision": metrics['mean_precision'],
+        "metrics/mean_recall": metrics['mean_recall']
+    })
+    
     print(f"Mean IoU: {metrics['mean_iou']:.4f}")
     print(f"Mean Dice: {metrics['mean_dice']:.4f}")
     print(f"Pixel Accuracy: {metrics['mean_pixel_accuracy']:.4f}")
     print(f"Precision: {metrics['mean_precision']:.4f}")
     print(f"Recall: {metrics['mean_recall']:.4f}")
+    
+    wandb.finish()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
