@@ -66,14 +66,10 @@ class UNet(nn.Module):
         d2 = self.upconv2(d3)
         d2 = torch.cat((e2, d2), dim=1)
         d2 = self.deconv2(d2)
-        print(f"Shape da saída do deconv2 (d2): {d2.shape}")
 
         d1 = self.upconv1(d2)
-        print(f"Shape da saída do upconv1 (d1): {d1.shape}")
         d1 = torch.cat((e1, d1), dim=1)
-        print(f"Shape da saída do cat (d1): {d1.shape}")
         d1 = self.deconv1(d1)
-        print(f"Shape da saída do deconv1 (d1): {d1.shape}")
 
         return self.final_conv(d1)
         

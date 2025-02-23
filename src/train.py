@@ -77,6 +77,8 @@ def train(train_loader, val_loader, model, device, optimizer, criterion):
                 "val_loss": current_val_loss
             }, os.path.join(checkpoint_dir, f"checkpoint_{i}.pth"))
 
+        print(f"Epoch {i+1} loss: {epoch_loss}")
+
     return train_loss, val_loss
 
 
