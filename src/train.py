@@ -79,12 +79,16 @@ def train(train_loader, val_loader, model, device, optimizer, criterion):
 
 
 def main(args):
-    wandb.init(project=config.wandb_project, config={
-        "epochs": args.epochs,
-        "batch_size": args.batch_size,
-        "learning_rate": args.learning_rate,
-        "num_classes": config.num_classes
-    })
+    wandb.init(
+        project=config.wandb_project, 
+        name=f"unet_camvid_{config.current_time}",
+        config={
+            "epochs": args.epochs,
+            "batch_size": args.batch_size,
+            "learning_rate": args.learning_rate,
+            "num_classes": config.num_classes
+        }
+    )
     
     train_dataset = CustomDataset(
         image_dir=os.path.join(config.root_dir, "train"),
