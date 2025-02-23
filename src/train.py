@@ -10,8 +10,6 @@ import argparse
 import wandb
 
 
-
-
 def evaluate(model, val_loader, device, criterion):
     model.eval()
 

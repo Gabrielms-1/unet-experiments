@@ -5,7 +5,6 @@ root_dir = "data/camvid/preprocessed"
 device = "cpu"
 # Checkpoint directory
 checkpoint_dir = 'data/model/checkpoints/'
-img_res = 720
 # Current timestamp for saving models and checkpoints
 current_time = time.strftime("%Y-%m-%d_%H-%M-%S")
 
