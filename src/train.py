@@ -31,7 +31,7 @@ def evaluate(model, val_loader, device, criterion):
             loss = criterion(output, mask)
             batch_loss += loss.item()
 
-            pred = (output > 0.5).float()
+            pred = torch.argmax(output, dim=1)
 
             total_pixels += mask.numel()
             correct_pixels += (pred == mask).sum().item()
