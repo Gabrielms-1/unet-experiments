@@ -13,6 +13,12 @@ import wandb
 def evaluate(model, val_loader, device, criterion):
     model.eval()
 
+    total_pixels = 0
+    correct_pixels = 0
+    TP = 0
+    FP = 0
+    FN = 0
+
     with torch.no_grad():
         epoch_loss = 0
         batch_loss = 0
@@ -25,9 +31,23 @@ def evaluate(model, val_loader, device, criterion):
             loss = criterion(output, mask)
             batch_loss += loss.item()
 
-        epoch_loss = batch_loss / len(val_loader)
+            pred = (output > 0.5).float()
 
-    return epoch_loss
+            total_pixels += mask.numel()
+            correct_pixels += (pred == mask).sum().item()
+
+            TP += ((pred == 1) & (mask == 1)).sum().item()
+            FP += ((pred == 1) & (mask == 0)).sum().item()
+            FN += ((pred == 0) & (mask == 1)).sum().item()
+
+        epoch_loss = batch_loss / len(val_loader)
+        accuracy = correct_pixels / total_pixels
+        precision = TP / (TP + FP + 1e-8)
+        recall = TP / (TP + FN + 1e-8)
+        
+        f1_score = 2 * (precision * recall) / (precision + recall + 1e-8)
+
+    return epoch_loss, accuracy, precision, recall, f1_score
 
 def train(train_loader, val_loader, model, device, optimizer, criterion):
     train_loss = []
@@ -54,14 +74,18 @@ def train(train_loader, val_loader, model, device, optimizer, criterion):
         
         epoch_loss = batch_loss / len(train_loader)
         train_loss.append(epoch_loss)
-        current_val_loss = evaluate(model, val_loader, device, criterion)
+        current_val_loss, accuracy, precision, recall, f1_score = evaluate(model, val_loader, device, criterion)
         val_loss.append(current_val_loss)
         
         print("logging in wandb")
         wandb.log({
             "epoch": i+1,
             "train_loss": epoch_loss,
-            "val_loss": current_val_loss
+            "val_loss": current_val_loss,
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1_score
         })
 
         checkpoint_dir = os.path.join(config.checkpoint_dir, config.current_time)
@@ -72,10 +96,14 @@ def train(train_loader, val_loader, model, device, optimizer, criterion):
                 "model_state_dict": model.state_dict(),
                 "epoch": i+1,
                 "train_loss": epoch_loss,
-                "val_loss": current_val_loss
+                "val_loss": current_val_loss,
+                "accuracy": accuracy,
+                "precision": precision,
+                "recall": recall,
+                "f1_score": f1_score
             }, os.path.join(checkpoint_dir, f"checkpoint_{i}.pth"))
 
-        print(f"Epoch {i+1} loss: {epoch_loss}")
+        print(f"Epoch {i+1} loss: {epoch_loss}, accuracy: {accuracy}, precision: {precision}, recall: {recall}, f1_score: {f1_score}")
 
     return train_loss, val_loss
 

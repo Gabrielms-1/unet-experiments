@@ -11,7 +11,7 @@ current_time = time.strftime("%Y-%m-%d_%H-%M-%S")
 # Model and training parameters
 num_classes = 32
 learning_rate = 0.001
-epochs = 20 # Default value, can be overridden by command line arguments
+epochs = 50 # Default value, can be overridden by command line arguments
 batch_size = 32 # Default value, can be overridden by command line arguments
 
 # Wandb settings
