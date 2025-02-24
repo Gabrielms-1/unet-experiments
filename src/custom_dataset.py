@@ -7,12 +7,13 @@ import numpy as np
 import torch
 
 class CustomDataset(Dataset):
-    def __init__(self, image_dir, mask_dir, class_mapping_path):
+    def __init__(self, image_dir, mask_dir, class_mapping_path, resize=(256, 256)):
         self.image_dir = image_dir
         self.mask_dir = mask_dir
         self.images = sorted([f for f in os.listdir(image_dir) if f.endswith('.png')])
         self.masks = [f.replace('right.png', 'L_right.png').replace('left.png', 'L_left.png') for f in self.images]
-        
+        self.resize = resize
+
         with open(class_mapping_path) as f:
             class_mapping = json.load(f)
             self.class_mapping = {class_name: tuple(rgb) for class_name, rgb in class_mapping.items()}
@@ -23,10 +24,10 @@ class CustomDataset(Dataset):
     
     def __getitem__(self, idx):
         image = Image.open(os.path.join(self.image_dir, self.images[idx]))
-        image = image_transform(image)
+        image = self.image_transform(image)
 
         mask = Image.open(os.path.join(self.mask_dir, self.masks[idx]))
-        mask = mask.resize((256, 256), Image.NEAREST)
+        mask = mask.resize((self.resize, self.resize), Image.NEAREST)
         mask = np.array(mask)
         mask = self.rgb_to_class(mask)
         mask = torch.tensor(mask, dtype=torch.long)
@@ -45,11 +46,12 @@ class CustomDataset(Dataset):
         return class_mask
 
 
-image_transform = transforms.Compose([
-    transforms.Resize((256, 256)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
+    def image_transform(self, image):
+        return transforms.Compose([
+            transforms.Resize(self.resize),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])(image)
 
 if __name__ == "__main__":
     dataset = CustomDataset(
